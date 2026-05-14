@@ -4,9 +4,9 @@ A Backstage Software Template that deploys a [Goose](https://goose-docs.ai/) AI 
 
 ## Overview
 
-[Goose](https://goose-docs.ai/) is an open-source AI agent developed by Block (now under the [AAIF](https://aaif.io/) at the Linux Foundation). It autonomously executes complex developer workflows — running commands, debugging errors, writing and reading files, and orchestrating multi-step tasks — directly on your infrastructure.
+[Goose](https://goose-docs.ai/) is an open-source AI agent developed by Block (now under the [AAIF](https://aaif.io/) at the Linux Foundation). It autonomously executes complex developer workflows (running commands, debugging errors, writing and reading files, and orchestrating multi-step tasks) directly on your infrastructure.
 
-This template scaffolds a GitOps repository that deploys a configured Goose agent instance on OpenShift using ArgoCD and Kustomize. No source code build is required — Goose ships as a ready-to-run container image.
+This template scaffolds a GitOps repository that deploys a configured Goose agent instance on OpenShift using ArgoCD and Kustomize. No source code build is required; Goose just ships as a ready-to-run container image.
 
 ## Prerequisites
 
