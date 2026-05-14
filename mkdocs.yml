@@ -1,0 +1,7 @@
+site_name: 'Template Documentation'
+nav:
+  - Overview: index.md
+  - Prerequisites: prerequisites.md
+  - Template Usage: usage.md
+plugins:
+  - techdocs-core
