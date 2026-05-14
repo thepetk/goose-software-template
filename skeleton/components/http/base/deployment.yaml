@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    tad.gitops.set/image: ".spec.template.spec.containers[0].image"
+    tad.gitops.get/image: ".spec.template.spec.containers[0].image"
+    tad.gitops.set/replicas: ".spec.replicas"
+    tad.gitops.get/replicas: ".spec.replicas"
+  labels:
+    app.kubernetes.io/instance: ${{ values.name }}
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: ${{ values.name }}
+  name: ${{ values.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: ${{ values.name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: ${{ values.name }}
+    spec:
+      containers:
+        - image: ${{ values.gooseImage }}
+          name: goose-agent
+          command: ["goosed", "agent"]
+          env:
+            - name: GOOSE_PROVIDER
+              value: "${{ values.gooseProvider }}"
+            - name: GOOSE_MODEL
+              value: "${{ values.gooseModel }}"
+            - name: GOOSE_HOST
+              value: "0.0.0.0"
+            - name: GOOSE_PORT
+              value: "3000"
+            - name: GOOSE_TLS
+              value: "false"
+          envFrom:
+            - secretRef:
+                name: ${{ values.name }}-provider-api-key
+                optional: true
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            runAsNonRoot: true
+      restartPolicy: Always

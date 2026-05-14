@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${{ values.name }}-goose-config
+  labels:
+    app.kubernetes.io/instance: ${{ values.name }}
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: ${{ values.name }}
+data:
+  GOOSE_PROVIDER: "${{ values.gooseProvider }}"
+  GOOSE_MODEL: "${{ values.gooseModel }}"

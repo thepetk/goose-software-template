@@ -1,0 +1,252 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: goose-agent
+  title: Goose AI Agent
+  description: >-
+    Deploy a Goose AI agent instance on OpenShift via GitOps.
+    Goose is an open-source AI agent by AAIF/Block that autonomously executes
+    complex developer workflows directly on your infrastructure.
+  tags:
+    - ai
+    - goose
+    - agent
+    - gitops
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: service
+  owner: user:thepetk
+  parameters:
+    - title: Goose Agent Configuration
+      required:
+        - name
+        - owner
+        - gooseProvider
+        - gooseModel
+      properties:
+        name:
+          title: Name
+          type: string
+          description: Unique name for this Goose agent instance (max 63 characters)
+          maxLength: 63
+          ui:autofocus: true
+          ui:field: EntityNamePicker
+
+        owner:
+          title: Owner
+          type: string
+          description: Owner of this component in the Backstage catalog
+          ui:field: OwnerPicker
+          ui:options:
+            allowedKinds:
+              - Group
+              - User
+          default: user:guest
+
+        gooseProvider:
+          title: LLM Provider
+          type: string
+          description: The LLM provider Goose will use to power the agent
+          default: anthropic
+          enum:
+            - anthropic
+            - openai
+            - google
+            - ollama
+            - openrouter
+          enumNames:
+            - Anthropic
+            - OpenAI
+            - Google
+            - Ollama
+            - OpenRouter
+
+        gooseModel:
+          title: Model Name
+          type: string
+          description: >-
+            The model to use with the selected provider
+            (e.g. claude-sonnet-4, gpt-4o, gemini-2.5-pro).
+            Must be a model supported by the chosen provider.
+          default: claude-sonnet-4
+          ui:help: >-
+            The model name must match the provider's model identifier exactly.
+            See the Goose documentation for supported models per provider.
+
+        argoNS:
+          title: ArgoCD Namespace
+          type: string
+          description: Namespace where ArgoCD is installed
+          default: openshift-gitops
+
+        argoInstance:
+          title: ArgoCD Instance
+          type: string
+          description: Name of the ArgoCD instance
+          default: default
+
+        argoProject:
+          title: ArgoCD Project
+          type: string
+          description: ArgoCD project to deploy into
+          default: default
+
+    - title: Repository Information
+      required:
+        - hostType
+        - repoOwner
+        - repoName
+        - branch
+      properties:
+        hostType:
+          title: Host Type
+          type: string
+          enum:
+            - GitHub
+            - GitLab
+          default: GitHub
+
+        repoOwner:
+          title: Repository Owner
+          type: string
+          description: GitHub organization or user / GitLab group or user
+
+        repoName:
+          title: Repository Name
+          type: string
+          description: Name for the GitOps repository (will be created as <repoName>-gitops)
+
+        branch:
+          title: Default Branch
+          type: string
+          default: main
+
+      dependencies:
+        hostType:
+          oneOf:
+            - properties:
+                hostType:
+                  enum:
+                    - GitHub
+                githubServer:
+                  title: GitHub Server
+                  type: string
+                  default: github.com
+                  description: GitHub server hostname
+              required:
+                - githubServer
+            - properties:
+                hostType:
+                  enum:
+                    - GitLab
+                gitlabServer:
+                  title: GitLab Server
+                  type: string
+                  default: gitlab.com
+                  description: GitLab server hostname
+              required:
+                - gitlabServer
+
+    - title: Deployment Information
+      required:
+        - namespace
+      properties:
+        gooseImage:
+          title: Goose Container Image
+          type: string
+          description: The Goose container image to deploy
+          default: ghcr.io/block/goose:latest
+          ui:help: >-
+            The default image is the official Goose release from GitHub Container Registry.
+            You can pin to a specific version tag for production use.
+
+        namespace:
+          title: Deployment Namespace
+          type: string
+          description: OpenShift namespace to deploy the Goose agent into
+          default: goose-agent
+
+  steps:
+    - id: fetch-gitops-skeleton
+      name: Fetch GitOps Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        targetPath: gitops
+        values:
+          name: ${{ parameters.name }}
+          owner: ${{ parameters.owner }}
+          namespace: ${{ parameters.namespace }}
+          gooseProvider: ${{ parameters.gooseProvider }}
+          gooseModel: ${{ parameters.gooseModel }}
+          gooseImage: ${{ parameters.gooseImage }}
+          argoNS: ${{ parameters.argoNS }}
+          argoInstance: ${{ parameters.argoInstance }}
+          argoProject: ${{ parameters.argoProject }}
+          repoURL: ${{ 'https://' + parameters.githubServer + '/' + parameters.repoOwner + '/' + parameters.repoName + '-gitops' if parameters.hostType === 'GitHub' else 'https://' + parameters.gitlabServer + '/' + parameters.repoOwner + '/' + parameters.repoName + '-gitops' }}
+          argoComponentOverlays: ./components/${{ parameters.name }}/overlays
+          remoteClusterAPIUri: ${{ parameters.remoteClusterAPIUrl }}
+
+    - id: renameComponentDir
+      name: Rename Component Directory
+      action: fs:rename
+      input:
+        files:
+          - from: gitops/components/http
+            to: gitops/components/${{ parameters.name }}
+
+    - id: publish-github-gitops
+      name: Publish GitOps Repository (GitHub)
+      if: ${{ parameters.hostType === 'GitHub' }}
+      action: publish:github
+      input:
+        repoUrl: ${{ parameters.githubServer }}?owner=${{ parameters.repoOwner }}&repo=${{ parameters.repoName }}-gitops
+        defaultBranch: ${{ parameters.branch }}
+        repoVisibility: public
+        sourcePath: gitops
+        description: GitOps repository for the ${{ parameters.name }} Goose AI agent
+
+    - id: publish-gitlab-gitops
+      name: Publish GitOps Repository (GitLab)
+      if: ${{ parameters.hostType === 'GitLab' }}
+      action: publish:gitlab
+      input:
+        repoUrl: ${{ parameters.gitlabServer }}?owner=${{ parameters.repoOwner }}&repo=${{ parameters.repoName }}-gitops
+        defaultBranch: ${{ parameters.branch }}
+        repoVisibility: public
+        sourcePath: gitops
+        description: GitOps repository for the ${{ parameters.name }} Goose AI agent
+
+    - id: wait-for-repository
+      name: Waiting for Repository
+      action: debug:wait
+      input:
+        seconds: 3
+
+    - id: register-gitops
+      name: Register GitOps Component
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish-github-gitops'].output.repoContentsUrl if parameters.hostType === 'GitHub' else steps['publish-gitlab-gitops'].output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+    - id: create-argocd-resources
+      name: Create ArgoCD Resources
+      action: argocd:create-resources
+      input:
+        appName: ${{ parameters.name }}
+        argoInstance: ${{ parameters.argoInstance }}
+        namespace: ${{ parameters.argoNS }}
+        repoUrl: ${{ 'https://' + parameters.githubServer + '/' + parameters.repoOwner + '/' + parameters.repoName + '-gitops' if parameters.hostType === 'GitHub' else 'https://' + parameters.gitlabServer + '/' + parameters.repoOwner + '/' + parameters.repoName + '-gitops' }}
+        path: ./app-of-apps
+        labelValue: ${{ parameters.name }}
+
+  output:
+    links:
+      - title: GitOps Repository
+        url: ${{ steps['publish-github-gitops'].output.remoteUrl if parameters.hostType === 'GitHub' else steps['publish-gitlab-gitops'].output.remoteUrl }}
+        icon: github
+      - title: Open in Catalog
+        icon: catalog
+        entityRef: ${{ steps['register-gitops'].output.entityRef }}
