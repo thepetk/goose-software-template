@@ -1,0 +1,13 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: ${{ values.name }}
+  description: GitOps repository for the ${{ values.name }} Goose AI agent deployment
+  annotations:
+    argocd/app-selector: rhtap/gitops=${{ values.name }}
+    backstage.io/kubernetes-id: ${{ values.name }}
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: gitops
+  owner: ${{ values.owner }}
+  lifecycle: experimental
