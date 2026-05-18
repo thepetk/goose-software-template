@@ -24,18 +24,12 @@ spec:
       containers:
         - image: ${{ values.gooseImage }}
           name: goose-agent
-          command: ["goosed", "agent"]
+          command: ["goose", "serve", "--host", "0.0.0.0", "--port", "3000"]
           env:
             - name: GOOSE_PROVIDER
               value: "${{ values.gooseProvider }}"
             - name: GOOSE_MODEL
               value: "${{ values.gooseModel }}"
-            - name: GOOSE_HOST
-              value: "0.0.0.0"
-            - name: GOOSE_PORT
-              value: "3000"
-            - name: GOOSE_TLS
-              value: "false"
           envFrom:
             - secretRef:
                 name: ${{ values.name }}-provider-api-key
