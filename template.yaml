@@ -167,6 +167,15 @@ spec:
           description: OpenShift namespace to deploy the Goose agent into
           default: goose-agent
 
+        otlpEndpoint:
+          title: OTLP Endpoint
+          type: string
+          description: >-
+            OpenTelemetry collector endpoint for traces (e.g. http://otel-collector:4318).
+            Goose will automatically export LLM calls, tool executions, and agent decisions
+            as traces. Leave empty to disable tracing.
+          default: ""
+
   steps:
     - id: fetch-gitops-skeleton
       name: Fetch GitOps Skeleton
