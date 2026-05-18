@@ -66,8 +66,21 @@ Or import it directly via the RHDH catalog import UI.
 | `repoName`      | Repository name (gitops repo will be `<repoName>-gitops`)              | —                            |
 | `gooseImage`    | Goose container image                                                  | `ghcr.io/block/goose:latest` |
 | `namespace`     | Deployment namespace                                                   | `goose-agent`                |
+| `otlpEndpoint`  | OTLP collector endpoint for traces (e.g. `http://otel-collector:4318`) | `""` (disabled)              |
 
 ArgoCD manages the full lifecycle: namespace creation, resource deployment, and continuous reconciliation.
+
+## Examples
+
+The [`examples/`](examples/) directory contains end-to-end walkthroughs for common use cases:
+
+| Example | Description |
+| ------- | ----------- |
+| [PR Review](examples/pr-review.md) | Instruct the agent to review a specific GitHub pull request and post inline comments |
+| [PR Description Enricher](examples/pr-description-enricher.md) | Automatically fill in a structured PR description when one is missing or sparse |
+| [License Compliance Check](examples/license-compliance-check.md) | Scan new dependencies in a PR against an approved license allowlist |
+| [Dependency Patrol](examples/dependency-patrol.md) | Scheduled daily job that bumps outdated packages and opens a draft PR per repository |
+| [Scheduled Daily Job](examples/scheduled-job.md) | Register a cron-based recipe that runs autonomously every day |
 
 ## Contributing
 
