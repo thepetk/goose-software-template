@@ -70,6 +70,21 @@ Or import it directly via the RHDH catalog import UI.
 
 ArgoCD manages the full lifecycle: namespace creation, resource deployment, and continuous reconciliation.
 
+## Observability
+
+Goose has built-in OpenTelemetry support. When `otlpEndpoint` is set, it automatically exports traces of every LLM call, tool execution, and agent decision.
+
+To receive traces on OpenShift you need two operators installed from OperatorHub:
+
+- **Red Hat build of OpenTelemetry** — deploys the OTLP collector
+- **Red Hat OpenShift distributed tracing platform (Tempo)** — stores and queries traces
+
+Once both are running, the collector's OTLP/HTTP endpoint (typically `http://otel-collector.<namespace>.svc:4318`) is what you pass as `otlpEndpoint` when scaffolding.
+
+To verify traces are flowing without a backend, add `OTEL_TRACES_EXPORTER=console` to the deployment and inspect `kubectl logs`.
+
+> **Note:** Jaeger reached end-of-life in November 2025. Use Tempo for new installations.
+
 ## Examples
 
 The [`examples/`](examples/) directory contains end-to-end walkthroughs for common use cases:
