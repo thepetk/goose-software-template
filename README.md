@@ -92,8 +92,6 @@ The [`examples/`](examples/) directory contains end-to-end walkthroughs for comm
 | Example | Description |
 | ------- | ----------- |
 | [PR Review](examples/pr-review.md) | Instruct the agent to review a specific GitHub pull request and post inline comments |
-| [PR Description Enricher](examples/pr-description-enricher.md) | Automatically fill in a structured PR description when one is missing or sparse |
-| [License Compliance Check](examples/license-compliance-check.md) | Scan new dependencies in a PR against an approved license allowlist |
 | [Dependency Patrol](examples/dependency-patrol.md) | Scheduled daily job that bumps outdated packages and opens a draft PR per repository |
 | [Scheduled Daily Job](examples/scheduled-job.md) | Register a cron-based recipe that runs autonomously every day |
 
